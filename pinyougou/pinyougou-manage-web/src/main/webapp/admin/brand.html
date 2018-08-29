@@ -26,24 +26,21 @@
                 });
             };
             $scope.paginationConf={
-		        currentPage : 	1 ,		//当前页号
-				totalItems :	10, 	//总记录数
-				itemsPerPage : 	10, 	//页大小
-				perPageOptions:[10,20,30,40,50],//可选择的每页大小
-		        onChange:function () { //当上述参数发送了变化后触发
-					$scope.reloadList();
+                currentPage:1,
+                totalItems:10,//总记录数
+                itemsPerPage:10,//页大小
+                perPageOptions:[10,20,30,40,50],//可选择的每页大小
+                onChange:function () {//当参数发生变化后触发
+                    $scope.reloadList();
                 }
-			};
-            $scope.reloadList = function () {
-				$scope.findPage(
-				    $scope.paginationConf.currentPage,
-					$scope.paginationConf.itemsPerPage
-				);
             };
-            $scope.findPage = function (page, rows) {
-				$http.get("../brand/findPage.do?page="+page+"&rows="+ rows).success(function (response) {
-					$scope.list = response.rows;
-					$scope.paginationConf.totalItems = response.total;
+            $scope.reloadList=function () {
+                $scope.findPage($scope.paginationConf.currentPage,$scope.paginationConf.itemsPerPage);
+            };
+            $scope.findPage=function (page, rows) {
+                $http.get("../brand/findPage.do?page="+page+"&rows="+rows).success(function (response) {
+                    $scope.list  = response.rows;
+                    $scope.paginationConf.totalItems = response.total;
                 });
             };
 
