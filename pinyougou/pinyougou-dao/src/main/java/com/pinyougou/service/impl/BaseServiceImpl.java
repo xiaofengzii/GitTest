@@ -12,6 +12,10 @@ import java.util.List;
 
 public abstract class BaseServiceImpl<T> implements BaseService<T> {
 
+    /**
+     * 4.0+之后的版本的spring可以使用泛型依赖注入
+     * Mapper<TbBrand> mapper ---->  brandMapper
+     */
     @Autowired
     private Mapper<T> mapper;
 
@@ -31,44 +35,47 @@ public abstract class BaseServiceImpl<T> implements BaseService<T> {
     }
 
     @Override
-    public PageResult findPage(Integer page, Integer rows) {
-        PageHelper.startPage(page,rows);
-        List<T> selectAll = mapper.selectAll();
-        PageInfo<T> info = new PageInfo<T>(selectAll);
-        return new PageResult(info.getTotal(),info.getList());
+    public PageResult findPage(Integer page, Integer pageSize) {
+        //设置分页
+        PageHelper.startPage(page, pageSize);
+
+        List<T> list = mapper.selectAll();
+
+        //转换为分页信息对象
+        PageInfo<T> pageInfo = new PageInfo<>(list);
+
+        return new PageResult(pageInfo.getTotal(), pageInfo.getList());
     }
 
     @Override
-    public PageResult findPage(Integer page, Integer rows, T t) {
-        PageHelper.startPage(page,rows);
-        List<T> selectAll = mapper.select(t);
-        PageInfo<T> info = new PageInfo<T>(selectAll);
-        return new PageResult(info.getTotal(),info.getList());
+    public PageResult findPage(Integer page, Integer pageSize, T t) {
+        //设置分页
+        PageHelper.startPage(page, pageSize);
+
+        List<T> list = mapper.select(t);
+
+        //转换为分页信息对象
+        PageInfo<T> pageInfo = new PageInfo<>(list);
+
+        return new PageResult(pageInfo.getTotal(), pageInfo.getList());
     }
 
     @Override
     public void add(T t) {
+        //选择性新增：
+        //id name char --- > 只给了id name两个属性值的话；那么如果使用选择性新增则在转换为insert 语句---》insert into tb_brand(id, name) values(?, ?)
         mapper.insertSelective(t);
     }
 
-    /**
-     * 根据主键更新
-     *
-     * @param t 实体对象
-     */
     @Override
     public void update(T t) {
+        //根据主键选择性更新
         mapper.updateByPrimaryKeySelective(t);
     }
 
-    /**
-     * 批量删除
-     *
-     * @param ids 主键集合
-     */
     @Override
     public void deleteByIds(Serializable[] ids) {
-        if (ids!=null&&ids.length>0){
+        if (ids != null && ids.length > 0) {
             for (Serializable id : ids) {
                 mapper.deleteByPrimaryKey(id);
             }
