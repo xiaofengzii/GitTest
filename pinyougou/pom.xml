@@ -293,6 +293,7 @@
                 <artifactId>xml-apis</artifactId>
                 <version>${xml.apis.version}</version>
             </dependency>
+
         </dependencies>
     </dependencyManagement>
     <build>
