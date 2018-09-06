@@ -32,7 +32,7 @@ app.controller("goodsController", function ($scope, $controller, $location, good
         object.success(function (response) {
             if(response.success){
                 alert(response.message);
-                //location.href = "goods.html";
+                location.href = "goods.html";
                 $scope.entity={};
                 $scope.html("");
             } else {
@@ -70,6 +70,9 @@ app.controller("goodsController", function ($scope, $controller, $location, good
             }
         });
     };
+
+
+
 
     $scope.delete = function () {
         if($scope.selectedIds.length < 1){
@@ -256,6 +259,23 @@ app.controller("goodsController", function ($scope, $controller, $location, good
             }
         }
         return false;
+    };
+
+    $scope.isMarketable = function (status) {
+        if($scope.selectedIds.length < 1){
+            alert("请先选择要上架的商品");
+            return;
+        }
+        if(confirm("确定要上架已选择的商品吗")){
+            goodsService.isMarketable($scope.selectedIds,status).success(function (response) {
+                if(response.success){
+                    $scope.reloadList();
+                    $scope.selectedIds = [];
+                } else {
+                    alert(response.message);
+                }
+            });
+        }
     };
 
     //修改商品的状态

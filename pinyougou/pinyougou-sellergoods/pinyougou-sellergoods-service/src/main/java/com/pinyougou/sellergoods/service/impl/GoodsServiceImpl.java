@@ -13,14 +13,13 @@ import com.pinyougou.service.impl.BaseServiceImpl;
 import com.pinyougou.vo.Goods;
 import com.pinyougou.vo.PageResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import tk.mybatis.mapper.entity.Example;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+@Transactional
 @Service(interfaceClass = GoodsService.class)
 public class GoodsServiceImpl extends BaseServiceImpl<TbGoods> implements GoodsService {
 
@@ -96,6 +95,8 @@ public class GoodsServiceImpl extends BaseServiceImpl<TbGoods> implements GoodsS
         item.setCreateTime(new Date());
         //更新时间
         item.setUpdateTime(item.getCreateTime());
+        //SPU商品id
+        item.setGoodsId(goods.getGoods().getId());
         //SKU 商品id
         item.setSellerId(goods.getGoods().getSellerId());
         //商家名称
@@ -113,13 +114,85 @@ public class GoodsServiceImpl extends BaseServiceImpl<TbGoods> implements GoodsS
 
         Example example = new Example(TbGoods.class);
         Example.Criteria criteria = example.createCriteria();
-        /*if(!StringUtils.isEmpty(goods.get***())){
-            criteria.andLike("***", "%" + goods.get***() + "%");
-        }*/
+        criteria.andNotEqualTo("isDelete","1");
+        if(!StringUtils.isEmpty(goods.getAuditStatus())){
+            criteria.andEqualTo("auditStatus",  goods.getAuditStatus() );
+        }
+        if(!StringUtils.isEmpty(goods.getGoodsName())){
+            criteria.andLike("goodsName", "%" + goods.getGoodsName() + "%");
+        }
+        if(!StringUtils.isEmpty(goods.getSellerId())){
+            criteria.andEqualTo("sellerId",  goods.getSellerId() );
+        }
+
+
 
         List<TbGoods> list = goodsMapper.selectByExample(example);
         PageInfo<TbGoods> pageInfo = new PageInfo<>(list);
 
         return new PageResult(pageInfo.getTotal(), pageInfo.getList());
+    }
+
+    @Override
+    public Goods findGoodsById(Long id) {
+        Goods goods = new Goods();
+        TbGoods tbGoods = goodsMapper.selectByPrimaryKey(id);
+        goods.setGoods(tbGoods);
+
+        TbGoodsDesc tbGoodsDesc = goodsDescMapper.selectByPrimaryKey(id);
+        goods.setGoodsDesc(tbGoodsDesc);
+
+        Example example = new Example(TbItem.class);
+        example.createCriteria().andEqualTo("goodsId",id);
+        List<TbItem> itemList = itemMapper.selectByExample(example);
+        goods.setItemList(itemList);
+        return goods;
+    }
+
+    @Override
+    public void updateGoods(Goods goods) {
+        goods.getGoods().setAuditStatus("0");
+        goodsMapper.updateByPrimaryKeySelective(goods.getGoods());
+
+        goodsDescMapper.updateByPrimaryKeySelective(goods.getGoodsDesc());
+
+        TbItem tbItem = new TbItem();
+        tbItem.setGoodsId(goods.getGoods().getId());
+        itemMapper.delete(tbItem);
+
+        saveItemList(goods);
+
+    }
+
+    @Override
+    public void updateStatus(Long[] ids, String status) {
+        TbGoods goods = new TbGoods();
+        goods.setAuditStatus(status);
+        Example example = new Example(TbGoods.class);
+        example.createCriteria().andIn("id", Arrays.asList(ids));
+        goodsMapper.updateByExampleSelective(goods,example);
+    }
+
+    @Override
+    public void deleteGoodsByIds(Long[] ids) {
+        TbGoods tbGoods = new TbGoods();
+        tbGoods.setIsDelete("1");
+
+        Example example = new Example(TbGoods.class);
+        example.createCriteria().andIn("id",Arrays.asList(ids));
+
+        goodsMapper.updateByExampleSelective(tbGoods,example);
+
+    }
+
+    @Override
+    public void updateIsMarketable(Long[] ids, String status) {
+        TbGoods tbGoods = new TbGoods();
+        tbGoods.setIsMarketable(status);
+
+        Example example = new Example(TbGoods.class);
+        example.createCriteria().andIn("id",Arrays.asList(ids));
+
+        goodsMapper.updateByExampleSelective(tbGoods,example);
     }
 }

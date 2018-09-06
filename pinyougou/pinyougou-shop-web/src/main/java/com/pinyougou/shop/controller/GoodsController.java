@@ -45,14 +45,19 @@ public class GoodsController {
     }
 
     @GetMapping("/findOne")
-    public TbGoods findOne(Long id) {
-        return goodsService.findOne(id);
+    public Goods findOne(Long id) {
+        return goodsService.findGoodsById(id);
     }
 
     @PostMapping("/update")
-    public Result update(@RequestBody TbGoods goods) {
+    public Result update(@RequestBody Goods goods) {
         try {
-            goodsService.update(goods);
+            TbGoods oldGoods = goodsService.findOne(goods.getGoods().getId());
+            String sellerId = SecurityContextHolder.getContext().getAuthentication().getName();
+            if (!sellerId.equals(oldGoods.getSellerId())||!sellerId.equals(goods.getGoods().getSellerId())){
+                return Result.fail("非法操作");
+            }
+            goodsService.updateGoods(goods);
             return Result.ok("修改成功");
         } catch (Exception e) {
             e.printStackTrace();
@@ -81,7 +86,29 @@ public class GoodsController {
     @PostMapping("/search")
     public PageResult search(@RequestBody  TbGoods goods, @RequestParam(value = "page", defaultValue = "1")Integer page,
                                @RequestParam(value = "rows", defaultValue = "10")Integer rows) {
+        String sellerId = SecurityContextHolder.getContext().getAuthentication().getName();
+        goods.setSellerId(sellerId);
         return goodsService.search(page, rows, goods);
+    }
+    @GetMapping("/updateStatus")
+    public Result updateStatus(Long[] ids,String status){
+        try {
+            goodsService.updateStatus(ids,status);
+            return Result.ok("更新成功");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Result.fail("更新失败");
+    }
+    @GetMapping("/isMarketable")
+    public Result isMarketable(Long[] ids,String status){
+        try {
+            goodsService.updateIsMarketable(ids,status);
+            return Result.ok("上架成功");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Result.fail("上架失败");
     }
 
 }
