@@ -124,9 +124,6 @@ public class GoodsServiceImpl extends BaseServiceImpl<TbGoods> implements GoodsS
         if(!StringUtils.isEmpty(goods.getSellerId())){
             criteria.andEqualTo("sellerId",  goods.getSellerId() );
         }
-
-
-
         List<TbGoods> list = goodsMapper.selectByExample(example);
         PageInfo<TbGoods> pageInfo = new PageInfo<>(list);
 
@@ -171,6 +168,15 @@ public class GoodsServiceImpl extends BaseServiceImpl<TbGoods> implements GoodsS
         Example example = new Example(TbGoods.class);
         example.createCriteria().andIn("id", Arrays.asList(ids));
         goodsMapper.updateByExampleSelective(goods,example);
+
+        if("2".equals(status)){
+            TbItem tbItem = new TbItem();
+            tbItem.setStatus("1");
+            Example example1 = new Example(TbItem.class);
+            example1.createCriteria().andIn("id", Arrays.asList(ids));
+            itemMapper.updateByExample(tbItem,example1);
+        }
+
     }
 
     @Override
