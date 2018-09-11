@@ -132,18 +132,8 @@ public class GoodsServiceImpl extends BaseServiceImpl<TbGoods> implements GoodsS
 
     @Override
     public Goods findGoodsById(Long id) {
-        Goods goods = new Goods();
-        TbGoods tbGoods = goodsMapper.selectByPrimaryKey(id);
-        goods.setGoods(tbGoods);
 
-        TbGoodsDesc tbGoodsDesc = goodsDescMapper.selectByPrimaryKey(id);
-        goods.setGoodsDesc(tbGoodsDesc);
-
-        Example example = new Example(TbItem.class);
-        example.createCriteria().andEqualTo("goodsId",id);
-        List<TbItem> itemList = itemMapper.selectByExample(example);
-        goods.setItemList(itemList);
-        return goods;
+        return findGoodsByIdAndStatus(id,null);
     }
 
     @Override
@@ -173,8 +163,8 @@ public class GoodsServiceImpl extends BaseServiceImpl<TbGoods> implements GoodsS
             TbItem tbItem = new TbItem();
             tbItem.setStatus("1");
             Example example1 = new Example(TbItem.class);
-            example1.createCriteria().andIn("id", Arrays.asList(ids));
-            itemMapper.updateByExample(tbItem,example1);
+            example1.createCriteria().andIn("goodsId", Arrays.asList(ids));
+            itemMapper.updateByExampleSelective(tbItem,example1);
         }
 
     }
@@ -200,5 +190,39 @@ public class GoodsServiceImpl extends BaseServiceImpl<TbGoods> implements GoodsS
         example.createCriteria().andIn("id",Arrays.asList(ids));
 
         goodsMapper.updateByExampleSelective(tbGoods,example);
+    }
+
+    @Override
+    public List<TbItem> findItemListByGoodsIdsAndStatus(Long[] ids, String status) {
+        Example example = new Example(TbItem.class);
+        example.createCriteria().andIn("goodsId",Arrays.asList(ids)).andEqualTo("status","1");
+        List<TbItem> itemList = itemMapper.selectByExample(example);
+        return itemList;
+
+    }
+    /*
+    根据商品id查询商品基本,描述,启用的sku列表
+    * */
+    @Override
+    public Goods findGoodsByIdAndStatus(Long goodsId, String status) {
+        Goods goods = new Goods();
+        TbGoods tbGoods = goodsMapper.selectByPrimaryKey(goodsId);
+        goods.setGoods(tbGoods);
+
+        TbGoodsDesc tbGoodsDesc = goodsDescMapper.selectByPrimaryKey(goodsId);
+        goods.setGoodsDesc(tbGoodsDesc);
+
+        Example example = new Example(TbItem.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("goodsId",goodsId);
+        if (!StringUtils.isEmpty(status)){
+            criteria.andEqualTo("status",status);
+        }
+        //按照是否默认值降序排序,默认为1,否则为0
+        example.orderBy("isDefault").desc();
+
+        List<TbItem> itemList = itemMapper.selectByExample(example);
+        goods.setItemList(itemList);
+        return goods;
     }
 }
